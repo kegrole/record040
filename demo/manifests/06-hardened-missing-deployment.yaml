@@ -1,0 +1,28 @@
+# Neither runAsNonRoot nor readOnlyRootFilesystem is configured.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-hardening
+  namespace: team-f
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: default-hardening
+  template:
+    metadata:
+      labels:
+        app: default-hardening
+    spec:
+      containers:
+        - name: app
+          image: registry.example.com/app:1.0
+          env:
+            # Folded block scalar: newlines inside become spaces, blank lines
+            # become newlines.
+            - name: GREETING
+              value: >-
+                hello
+                world
+
+                second paragraph

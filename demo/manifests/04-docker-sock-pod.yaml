@@ -1,0 +1,18 @@
+# Mounting the Docker socket hands host-root control to the container.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docker-sock-pod
+  namespace: team-d
+spec:
+  containers:
+    - name: sock-sidecar
+      image: registry.example.com/docker:24
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket

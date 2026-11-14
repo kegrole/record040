@@ -1,0 +1,111 @@
+# Audit rules are pure data: removing or changing a rule changes the verdict.
+# Each rule has:
+#   rule        stable identifier reported in findings
+#   description human-readable explanation
+#   severity    high / medium / low (free-form label, surfaced verbatim)
+#   scope       pod, container, init_container, any_container, capability,
+#               volume (or a YAML list of these scopes)
+#   path        dotted lookup path inside the scoped target
+#   operator    equals, not_equals, in, not_in, contains, not_contains
+#   value       expected value (omit for null comparisons)
+#   evidence    python format_map template; target fields plus flat context
+#               keys such as {container} or {context_container} are available
+rules:
+  - rule: privileged
+    description: Container runs in privileged mode.
+    severity: high
+    scope: any_container
+    path: securityContext.privileged
+    operator: equals
+    value: true
+    evidence: "container {context_container} runs with securityContext.privileged=true"
+
+  - rule: allow-privilege-escalation
+    description: Privilege escalation is explicitly allowed.
+    severity: high
+    scope: any_container
+    path: securityContext.allowPrivilegeEscalation
+    operator: equals
+    value: true
+    evidence: "container {context_container} sets allowPrivilegeEscalation=true"
+
+  - rule: run-as-non-root-missing
+    description: runAsNonRoot is not set to true.
+    severity: medium
+    scope: any_container
+    path: securityContext.runAsNonRoot
+    operator: not_equals
+    value: true
+    evidence: "container {context_container} does not set runAsNonRoot=true (actual={securityContext_runAsNonRoot})"
+
+  - rule: run-as-root-user
+    description: Container explicitly runs as UID 0 (root).
+    severity: high
+    scope: any_container
+    path: securityContext.runAsUser
+    operator: equals
+    value: 0
+    evidence: "container {context_container} runs as runAsUser=0 (root)"
+
+  - rule: host-network
+    description: Pod shares the host network namespace.
+    severity: high
+    scope: pod
+    path: hostNetwork
+    operator: equals
+    value: true
+    evidence: "pod sets hostNetwork=true"
+
+  - rule: host-pid
+    description: Pod shares the host PID namespace.
+    severity: high
+    scope: pod
+    path: hostPID
+    operator: equals
+    value: true
+    evidence: "pod sets hostPID=true"
+
+  - rule: host-ipc
+    description: Pod shares the host IPC namespace.
+    severity: high
+    scope: pod
+    path: hostIPC
+    operator: equals
+    value: true
+    evidence: "pod sets hostIPC=true"
+
+  - rule: hostpath-volume
+    description: Volume mounts a hostPath, exposing host files to the container.
+    severity: high
+    scope: volume
+    path: hostPath
+    operator: not_contains
+    value: null
+    evidence: "volume {context_volume} mounts hostPath {hostPath} (type={type})"
+
+  - rule: dangerous-capabilities
+    description: Capabilities added to a container include a dangerous one.
+    severity: high
+    scope: capability
+    path: capability
+    operator: in
+    value: [SYS_ADMIN, NET_ADMIN, SYS_PTRACE, SYS_MODULE]
+    evidence: "container {context_container} adds capability {capability}"
+
+  - rule: writable-root-filesystem
+    description: Container root filesystem is not marked read-only.
+    severity: medium
+    scope: any_container
+    path: securityContext.readOnlyRootFilesystem
+    operator: not_equals
+    value: true
+    evidence: "container {context_container} does not set readOnlyRootFilesystem=true (actual={securityContext_readOnlyRootFilesystem})"
+
+  - rule: seccomp-profile-missing
+    description: No seccompProfile type is configured.
+    severity: medium
+    scope: any_container
+    path: securityContext.seccompProfile.type
+    operator: equals
+    value: null
+    evidence: "container {context_container} has no securityContext.seccompProfile.type"

@@ -1,0 +1,23 @@
+# Runs as UID 0 and explicitly allows privilege escalation.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: root-worker
+  namespace: team-c
+spec:
+  serviceName: root-worker
+  replicas: 1
+  selector:
+    matchLabels:
+      app: root-worker
+  template:
+    metadata:
+      labels:
+        app: root-worker
+    spec:
+      containers:
+        - name: worker
+          image: registry.example.com/worker:1.0
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: true

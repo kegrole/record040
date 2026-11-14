@@ -1,0 +1,25 @@
+# Dangerous capability is added on an init container.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-bootstrap
+  namespace: team-e
+spec:
+  selector:
+    matchLabels:
+      app: node-bootstrap
+  template:
+    metadata:
+      labels:
+        app: node-bootstrap
+    spec:
+      initContainers:
+        - name: init-setup
+          image: registry.example.com/bootstrap:1.0
+          securityContext:
+            capabilities:
+              add: [SYS_ADMIN]
+              drop: [ALL]
+      containers:
+        - name: main
+          image: registry.example.com/main:1.0
